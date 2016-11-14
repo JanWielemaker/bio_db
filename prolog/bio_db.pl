@@ -878,10 +878,20 @@ bio_db_close_connections.
 
 */
 bio_db_db_predicate( Pname/Arity) :-
-	( ground(Pname/Arity) -> functor(Head,Pname,Arity); true ),
-	predicate_property( user:Head, imported_from(bio_db) ),
-	functor( Head, Pname, Arity ),
-	once( (member(Pfx,[map_,edge_]),atom_concat(Pfx,_,Pname)) ).
+	ground(Pname/Arity), !,
+	functor(Head,Pname,Arity),
+	bio_db_predicate_name(Pname),
+	predicate_property(bio_db:Head, exported), !.
+bio_db_db_predicate( Pname/Arity) :-
+	module_property(bio_db, exports(List)),
+	member(Pname/Arity, List),
+	bio_db_predicate_name(Pname).
+
+bio_db_predicate_name(Pname) :-
+	(   sub_atom(Pname, 0, _, _, map_)
+	->  true
+	;   sub_atom(Pname, 0, _, _, edge_)
+	).
 
 /**  edge_string_hs( ?EnsP1, ?EnsP2, ?W ).
 
@@ -1990,7 +2000,7 @@ bio_db_source_info( File, InfoF ) :-
 	atom_concat( Stem, '_info', InfoStem ),
 	file_name_extension( InfoStem, Ext, InfoF ).
 
-/** bio_db_predicate_info( +PidOrPname, -InfoName ) :-
+/** bio_db_predicate_info( +PidOrPname, -InfoName ).
 
 	Generate the information predicate name of a Pid or of Db predicate name.
 
@@ -2206,3 +2216,22 @@ pack_errors:message( failed_to_load(Iface,Pid,File) ) -->
 % add at_halt, close databases particularly berkeley ones
 :- at_halt( bio_db_close_connections ).
 :- initialization( bio_db_paths, after_load ).
+
+:- multifile sandbox:safe_primitive/1.
+
+bio_sandbox_clause(sandbox:safe_primitive(bio_db:Head)) :-
+	module_property(bio_db, exports(PIList)),
+	member(Name/Arity, PIList),
+	(   sub_atom(Name, 0, _, _, edge_)
+	;   sub_atom(Name, 0, _, _, map_)
+	),
+	functor(Head, Name, Arity).
+
+term_expansion(bio_db_interface, Clauses) :-
+	findall(Clause, bio_sandbox_clause(Clause), Clauses).
+
+bio_db_interface.
+sandbox:safe_primitive(bio_db:bio_db_info(_,_,_)).
+sandbox:safe_primitive(bio_db:bio_db_info(_,_,_,_)).
+sandbox:safe_primitive(bio_db:go_term_symbols(_,_,_)).
+sandbox:safe_primitive(bio_db:symbols_string_graph(_,_,_)).
