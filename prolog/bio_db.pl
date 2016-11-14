@@ -878,10 +878,20 @@ bio_db_close_connections.
 
 */
 bio_db_db_predicate( Pname/Arity) :-
-	( ground(Pname/Arity) -> functor(Head,Pname,Arity); true ),
-	predicate_property( user:Head, imported_from(bio_db) ),
-	functor( Head, Pname, Arity ),
-	once( (member(Pfx,[map_,edge_]),atom_concat(Pfx,_,Pname)) ).
+	ground(Pname/Arity), !,
+	functor(Head,Pname,Arity),
+	bio_db_predicate_name(Pname),
+	predicate_property(bio_db:Head, exported), !.
+bio_db_db_predicate( Pname/Arity) :-
+	module_property(bio_db, exports(List)),
+	member(Pname/Arity, List),
+	bio_db_predicate_name(Pname).
+
+bio_db_predicate_name(Pname) :-
+	(   sub_atom(Pname, 0, _, _, map_)
+	->  true
+	;   sub_atom(Pname, 0, _, _, edge_)
+	).
 
 /**  edge_string_hs( ?EnsP1, ?EnsP2, ?W ).
 
