@@ -1,0 +1,67 @@
+---   Releases   ---
+--------------------
+Paper:            RockDB + New downloads 
+
+Todo:             Versioning of data, client vs server.
+                  Mirror downloads (get all latest files
+						of whatever is already installed).
+
+SWI:              Harmonization of bdb and rocks db ? 
+                  Rocks allows aliases.
+						Duplicate option for rocksdb.
+						Rocks doesn't have mode (and does not open as read only so no 2 processes can open the db?)
+						Would be nice to have the "correct" types when opening
+						an existing database with no options.
+						Rocks: Enumerate connections ? rocks_current(X).
+ 
+0.7   ...
+		16.11.14    Started a GitHub repository
+		            Jan Wielemaker found bug for obsolete call to map_gont_include/2 (and assoc. preds)
+		            added flag bio_db_qcomplie (def: true) to control the following addition:
+                  a retractall/1 fix and qcompile(large) options in lad_files/2 by Jan Wielemaker
+		16.10.28    added  map_ncbi_dnuc_symb/2
+      16.10.27    added  map_hgnc_hgnc_ccds/2 & map_hgnc_ccds_hgnc/2
+      16.10.13    minor doc fix about what repo contains
+
+0.6   16.10.13    published
+      16.10.13    fixed doc to more interface predicates.
+		            added prosite zip files to web-server (were missing)
+		            added map_unip_hgnc_unip/2.
+      16.09.19    added bio_db_info/4 to the documentation
+      16.09.17    pl_bdb correction to open call and now more aware that it
+                  can be called from within bio_db
+                  a couple of small typos in bio_db.pl
+
+0.5   16.09.11    published
+
+      16.09.11    bio_db_citation/2 (2 clauses added)
+                  bio_db_close_connections/0 and register it with at_halt/1
+						Handle N-ary tables in berkeley and 
+						New bio_db_info( [Inteface,] +Pid, ?Key, -Value ).
+						Can now close current connections with pack_error if not open
+						bio_db_interface/1 prints a proper error message now
+                  Started using lib(pack_errors)  (arg_enumerating/3 was the first one)
+      16.09.08 -  Updates to almost all std_ scripts in auxil
+                  new helper independent preds in auxil/lib
+						Full successful download of data and creation of prolog dbs.
+					   Check script auxil/bio_db_check.pl
+						Shortened bio_db_load_prolog_map/2 -> bio_db_serve/1 (load as 2nd arg)
+
+      16.09.06 -  Added auto-reply via prolog_flag(bio_db_ok,true).
+		         +  Canonical downloads are now from .zip files.
+					+  Many improvements to the downloads logic.
+		         +  pl-> berkeley and pl-> sqlite are now user.
+					+  pl-> sqlite are done in batches of 500, so there is no need for sqlite exec now
+
+0.4  16th Sept 2015
+		15.09.13 -  Added Berkeley DB interface (via SWI's own library(bdb)).
+		15.07.25 -  Added edges for is-a (and reverses inc(cludes)) from GO.
+		15.07.25 -  Added bio_db_version.
+
+0.3  Spring 2015
+     First releases including maps from hgnc, ncbi and uniprot.
+	  Graph edges from string (with weights).
+
+0.2
+
+0.1

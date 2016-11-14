@@ -1,0 +1,497 @@
+<!DOCTYPE html>
+<html>
+<head>
+<title>bio_db.pl -- Access, use and manage big, biological datasets.</title>
+
+<link rel="stylesheet" type="text/css" href="pldoc.css">
+<meta http-equiv="content-type" content="text/html; charset=UTF-8">
+
+</head>
+<body>
+
+
+<h1 class="file"><span style="float:right"></span>bio_db.pl -- Access, use and manage big, biological datasets.</h1>
+
+<p>
+Bio_db gives access to pre-packed biological databases and simplifies
+management and translation of biological data to Prolog
+friendly formats.</p>
+
+<p>
+There are currently 2 major types of data supported: maps, and graphs.
+Maps define product mappings, translations and memberships, while graphs define interactions which
+can be visualised as weighed graphs.</p>
+
+<p>
+Bio_db itself does not come with the datasets. You can either download the separate <code>pack(bio_db_repo)</code>
+which contains all of the Prolog datasets bar one, or let auto-downloading retrieve the datasets
+serving each of the data predicates as you query them. The one dataset excluded from bio_db_repo is <a href="bio_db.html#edge_string_hs/3">edge_string_hs/3</a>
+and this is due to its size (~450Mb). This dataset can be auto-downloaded. Auto-downloading works
+transparently to the user, where a data set is downloaded by simply calling the predicate.
+For example</p>
+
+<pre class="code" ext="">
+?- map_hgnc_symb_hgnc( 'LMTK3', Hgnc ).
+% prolog DB:table hgnc:map_hgnc_symb_hgnc/2 is not installed, do you want to download (Y/n) ?
+% Trying to get: url_file(http://www.stoics.org.uk/bio_db_repo/data/maps/hgnc/map_hgnc_symb_hgnc.pl,/usr/local/users/nicos/local/git/test_bio_db/data/maps/hgnc/map_hgnc_symb_hgnc.pl)
+% Loading prolog db: /usr/local/users/nicos/local/git/test_bio_db/data/maps/hgnc/map_hgnc_symb_hgnc.pl
+Hgnc = 19295.
+
+?- bio_db_interface( prosqlite ).
+% Setting bio_db_interface prolog_flag, to: prosqlite
+true.
+
+?- map_hgnc_prev_symb( Prv, Symb ).
+% prosqlite DB:table hgnc:map_hgnc_prev_symb/2 is not installed, do you want to download (Y/n) ?
+% Trying to get: url_file(http://www.stoics.org.uk/bio_db_repo/data/maps/hgnc/map_hgnc_prev_symb.sqlite,/usr/local/users/nicos/local/git/test_bio_db/data/maps/hgnc/map_hgnc_prev_symb.sqlite)
+false.
+
+?- map_hgnc_prev_symb( Prv, Symb ).
+% prosqlite DB:table hgnc:map_hgnc_prev_symb/2 is not installed, do you want to download (Y/n) ?
+% Trying to get: url_file(http://www.stoics.org.uk/bio_db_repo/data/maps/hgnc/map_hgnc_prev_symb.sqlite,/usr/local/users/nicos/local/git/test_bio_db/data/maps/hgnc/map_hgnc_prev_symb.sqlite)
+% Loading prosqlite db: /usr/local/users/nicos/local/git/test_bio_db/data/maps/hgnc/map_hgnc_prev_symb.sqlite
+Prv = 'A1BG-AS',
+Symb = 'A1BG-AS1' .
+</pre>
+
+<p>
+Databases</p>
+
+<dl class="termlist">
+<dt class="term">Ensembl=ense</dt><dd>Homo sapiens genes and proteins
+
+<p>
+*</p></dd>
+<dt class="term">HGNC=hgnc</dt><dd>Hugo Gene Nomenclature Committee, <a href="http://www.genenames.org/">http://www.genenames.org/</a></dd>
+<dt class="term">NCBI=ncbi</dt><dd><var>NCBI</var></dd>
+<dt class="term">Uniprot</dt><dd>Protein database.</dd>
+<dt class="term">String</dt><dd>Protein-Protein interactions data base</dd>
+<dt class="term">Interactome</dt><dd>pathways (not yet included to</dd>
+</dl>
+
+<p>
+The name convension for maps is</p>
+
+<pre class="code" ext="">
+ ?- map_hgnc_hgnc_symb( Hgnc, Symb ).
+ Hgnc = 1,
+ Symb = 'A12M1~withdrawn' ;
+ Hgnc = 2,
+ Symb = 'A12M2~withdrawn' .
+
+ ?- map_hgnc_hgnc_symb( 19295, Symb ).
+ Symb = 'LMTK3'.
+
+ ?- map_hgnc_symb_hgnc( 'LMTK3', Hgnc ).
+Hgnc = 19295.
+
+</pre>
+
+<p>
+Where the first hgnc corresponds to the source database, the second identifies the first argument of the
+map to be the unique identifier field for that database (here a positive integer starting at 1 and with no gaps),
+The last part of the predicate name corresponds to the second argument, which here is the unique Symbol
+assigned to a gene by HGNC. In the current version of bio_db, all tokens in map filenames are 4 characters long.
+Map data for predicate Pname from database DB are looked for in DB(Pname.Ext) (see <a href="bio_db.html#bio_db_paths/0">bio_db_paths/0</a>).
+Extension, Ext, depends on the current bio_db database interface (see <a href="bio_db.html#bio_db_interface/1">bio_db_interface/1</a>), and it is sqlite if
+the interface is prosqlite and pl otherwise.</p>
+
+<p>
+The name convesion for graphs is</p>
+
+<pre class="code" ext="">
+?- edge_string_hs_symb( Symb1, Symb2, W ).
+S1 = 'A1BG',
+S2 = 'ABAT',
+W = 360 ;
+S1 = 'A1BG',
+S2 = 'ABCC6',
+W = 158 .
+</pre>
+
+<p>
+Where only the first and second tokens, edge and string respectively, are controlled. The second token
+indicates the database of origin. Graph data for predicate Pname from database DB are looked for in
+<code>bio_db_data(graphs/DB/Pname.Ext)</code> (see <a class="extmanual" href="http://www.swi-prolog.org/pldoc/man?predicate=bio_db_paths/1">bio_db_paths/1</a>).
+Extension, Ext, depends on the current bio_db database interface (see <a href="bio_db.html#bio_db_interface/1">bio_db_interface/1</a>), and it is sqlite if
+the interface is prosqlite and pl otherwise.</p>
+
+<p>
+Bio_db supports two db interfaces. The first one is prolog fact bases, which is the default, and the other is
+prosqlite which is based on <code>pack(prosqlite)</code> and serves the predicates from sqlite databases.
+The underlying mechanisms are entirely transparent to the user. In order to use the sqlite data sources
+<code>pack(prosqlite)</code> needs to be installed via the pack manager</p>
+
+<pre class="code" ext="">
+ ?- pack_install( prosqlite ).
+</pre>
+
+<p>
+The user can control which interface is in use with the <a href="bio_db.html#bio_db_interface/1">bio_db_interface/1</a> predicate.</p>
+
+<pre class="code" ext="">
+ ?- bio_db_interface( Curr ).
+ Curr = prolog.
+
+ ?- bio_db_interface( prosqlite ).
+
+ ?- bio_db_interface( Curr ).
+ Curr = prolog.
+</pre>
+
+<p>
+The type of the interface of a bio_db data predicate is determined by the interface at the
+time of first call.</p>
+
+<dl>
+<dt class="pubdef"><span style="float:right"></span><a name="bio_db_paths/0"><b class="pred">bio_db_paths</b></a></dt><dd class="defbody">Initialisation call- setting up path aliases.
+
+<blockquote>
+There are two main directory repositories the predicate
+deals with: (a) the bio_db installed databases root (alias bio_db_data), and
+(b) the root of downloaded databases (alias bio_db_downloads).
+Optionally a top directory of which both (a) and (b) are subdirs can be defined (alias bio_db).
+The default value for alias bio_db is a made-up pack directory <code>pack(bio_db_repo)</code>.
+The default for bio_db_data is sub directory <code>data</code> of alias bio_db, while
+bio_db_downloads defaults to sub directory <code>downloads</code> of the alias bio_db.
+The canonical subdirectory name for (a) is data and for (b) is downloads.
+</blockquote>
+
+<p>
+<code>pack(bio_db_repo)</code> can also be installed as a standalone package from SWI's manager.</p>
+
+<pre class="code" ext="">
+?- pack_install( bio_db_repo ).
+</pre>
+
+<blockquote>
+This will install all but one of the Prolog database files. Sqlite files can only be downloaded
+on-demand. The one Prolog DB file missing is <code class="nofile">edge_string_hs.pl</code> from data/graphs/string/.
+It has been excluded because it is way bigger than the rest, sizing at 0.5 Gb.
+It can be downloaded on-demand, transparently to the user upon invocation of the associated,
+arity 3 predicate.
+</blockquote>
+
+<blockquote>
+Directory locations for (a) and (b) above can be given as either prolog flags with
+key bio_db_root and bio_dn_root respectively or via environment variables
+BioDbRoot and BioDnRoot.
+</blockquote>
+
+<p>
+Installed root <code>alias(bio_db_data)</code> contains sub-dirs</p>
+
+<dl class="termlist">
+<dt class="term"><span class="functor">graphs</span></dt><dd>for graphs; string and reactome</dd>
+<dt class="term"><span class="functor">maps</span></dt><dd>for all the supported maps</dd>
+</dl>
+
+<p>
+The above are mapped to aliases bio_graphs and bio_maps respectively.
+Within each of these sub-directories there is further
+structure based on the database the set was originated.</p>
+
+<p>
+Downloaded root <code>alias(bio_db_downloads)</code> may contain sub-dirs</p>
+
+<dl class="termlist">
+<dt class="term"><span class="functor">hgnc</span></dt><dd>data from HGNC database</dd>
+<dt class="term"><span class="functor">ncbi</span></dt><dd>data from NCBI database</dd>
+<dt class="term"><span class="functor">reactome</span></dt><dd>data from Reactome database</dd>
+<dt class="term"><span class="functor">string</span></dt><dd>data from string database</dd>
+<dt class="term"><span class="functor">uniprot</span></dt><dd>protein data from EBI</dd>
+</dl>
+
+<p>
+Alias bio_db_downloads is only useful if you are downloading data files directly from
+the supported databases.</p>
+
+<p>
+See</p>
+
+<pre class="code" ext="">
+?- absolute_file_name( packs(bio_db(auxil)), Auxil ), ls( Auxil ).
+</pre>
+
+<p>
+for examples of how these can be used.</p>
+
+<p>
+For most users these aliases are not needed as the library manages them automatically.</p>
+
+<dl class="tags">
+<dt class="keyword-tbd">To be done</dt><dd class="keyword-tbd">- transfer datasets and downloads to new pack location when running on newly installed
+SWI version upgrade.</dd>
+</dl>
+
+</dd>
+<dt class="pubdef"><span style="float:right"></span><a name="bio_db_source/2"><b class="pred">bio_db_source</b><var class="arglist">(?Type, ?Db)</var></a></dt><dd class="defbody">True if <var>Db</var> is a source database for bio_db serving prediate of type <var>Type</var>.
+<var>Type</var> is either maps or graphs.
+
+<p>
+The databases are</p>
+<ul>
+<li>hgnc</li>
+<li>gont</li>
+<li>ncbi</li>
+<li>string</li>
+<li>unip</li>
+</ul>
+</dd>
+<dt class="pubdef"><span style="float:right"></span><a name="bio_db_interface/1"><b class="pred">bio_db_interface</b><var class="arglist">(?Iface)</var></a></dt><dd class="defbody">Interrogate or set the current interface for bio_db database predicates.
+By default ==<var>Iface</var> = prolog==.
+
+<pre class="code" ext="">
+?- bio_db_interface( Iface ).
+Iface = prolog.
+
+?- debug( bio_db ).
+true.
+
+?- bio_db_interface( wrong ).
+% Could not set bio_db_interface prolog_flag, to: wrong, which in not one of: [prolog,prosqlite]
+false.
+
+?- bio_db_interface( Iface ).
+Iface = prolog.
+
+?- map_hgnc_symb_hgnc( 'LMTK3', Hgnc ).
+% Loading prolog db: /usr/local/users/nicos/local/git/lib/swipl-7.1.32/pack/bio_db_repo/data/maps/hgnc/map_hgnc_symb_hgnc.pl
+Hgnc = 19295.
+
+?- bio_db_interface( prosqlite ).
+% Setting bio_db_interface prolog_flag, to: prosqlite
+true.
+
+?- map_hgnc_prev_symb( Prev, Symb ).
+% prosqlite DB:table hgnc:map_hgnc_prev_symb/2 is not installed, do you want to download (Y/n) ?
+% Execution Aborted
+?- map_hgnc_prev_symb( Prev, Symb ).
+% Loading prosqlite db: /usr/local/users/nicos/local/git/lib/swipl-7.1.32/pack/bio_db_repo/data/maps/hgnc/map_hgnc_prev_symb.sqlite
+Prev = 'A1BG-AS',
+Symb = 'A1BG-AS1' ;
+
+</pre>
+
+<p>
+In which case <var>Iface</var> is prosqlite.</p></dd>
+<dt class="pubdef"><span style="float:right"></span><a name="edge_string_hs/3"><b class="pred">edge_string_hs</b><var class="arglist">(?EnsP1, ?EnsP2, ?W)</var></a></dt><dd class="defbody">Weighted graph edges predicate from String database between Ensembl protein ids.
+<var>W</var> is an integger in 0 &lt; <var>W</var> &lt; 1000.
+
+<pre class="code" ext="">
+Symb = 'LMTK3'.
+ map_hgnc_symb_entz( 'LMTK3', Entz ), map_ncbi_entz_ensp( Entz, EnsP ), edge_string_hs( EnsP, Inter, W ).
+Entz = 114783,
+EnsP = 'ENSP00000270238',
+Inter = 'ENSP00000075503',
+W = 186 ;
+Entz = 114783,
+EnsP = 'ENSP00000270238',
+Inter = 'ENSP00000162044',
+W = 165 ;
+Entz = 114783,
+EnsP = 'ENSP00000270238',
+Inter = 'ENSP00000178640',
+W = 389 ...
+</pre>
+
+</dd>
+<dt class="pubdef"><span style="float:right"></span><a name="edge_string_hs_symb/3"><b class="pred">edge_string_hs_symb</b><var class="arglist">(?Symb1, ?Symb2, ?W)</var></a></dt><dd class="defbody">Weighted graph edges predicate from String database between HGNC symbol ids.
+<var>W</var> is an integger in 0 &lt; <var>W</var> &lt; 1000.
+
+<pre class="code" ext="">
+?- edge_string_hs_symb( 'LMTK3', Inter, W ).
+Inter = 'MAP2K5',
+W = 389 ;
+Inter = 'MAPK3',
+W = 157 ;
+Inter = 'MASTL',
+W = 211 ;
+Inter = 'MDC1',
+W = 198 ;
+Inter = 'MFSD2A',
+W = 165 ;
+Inter = 'MRPS30',
+W = 179 ....
+</pre>
+
+</dd>
+<dt class="pubdef"><span style="float:right"></span><a name="map_hgnc_hgnc_symb/2"><b class="pred">map_hgnc_hgnc_symb</b><var class="arglist">(?Hgnc, ?Symb)</var></a></dt><dd class="defbody">Map predicate from HGNC unique integer identifier to unique gene symbol.
+
+<pre class="code" ext="">
+?- map_hgnc_hgnc_symb( 19295, Symb ).
+Symb = 'LMTK3'.
+</pre>
+
+</dd>
+<dt class="pubdef"><span style="float:right"></span><a name="map_hgnc_hgnc_name/2"><b class="pred">map_hgnc_hgnc_name</b><var class="arglist">(?Hgnc, ?Symb)</var></a></dt><dd class="defbody">Map predicate from HGNC unique integer identifier to unique gene name/description.
+
+<pre class="code" ext="">
+?- map_hgnc_hgnc_name( 19295, Name ).
+Name = 'lemur tyrosine kinase 3'.
+</pre>
+
+</dd>
+<dt class="pubdef"><span style="float:right"></span><a name="map_hgnc_symb_hgnc/2"><b class="pred">map_hgnc_symb_hgnc</b><var class="arglist">(?Symb, ?Hgnc)</var></a></dt><dd class="defbody">Map predicate from HGNC unique symbol to unique HGNC integer identifier.
+
+<pre class="code" ext="">
+?- map_hgnc_symb_hgnc( 'LMTK3', HGNC ).
+HGNC = 19295.
+</pre>
+
+</dd>
+<dt class="pubdef"><span style="float:right"></span><a name="map_hgnc_syno_symb/2"><b class="pred">map_hgnc_syno_symb</b><var class="arglist">(?Syno, ?Symb)</var></a></dt><dd class="defbody">Map predicate from gene synonyms to approved HGNC Symbol.
+
+<pre class="code" ext="">
+?- map_hgnc_syno_symb( 'LMR3', Symb ).
+Symb = 'LMTK3'.
+</pre>
+
+</dd>
+<dt class="pubdef"><span style="float:right"></span><a name="map_hgnc_prev_symb/2"><b class="pred">map_hgnc_prev_symb</b><var class="arglist">(?Prev, ?Symb)</var></a></dt><dd class="defbody">Map predicate from previously known-as gene names to approved HGNC Symbol.
+
+<pre class="code" ext="">
+?- map_hgnc_prev_symb( 'ERBB', Symb ).
+Symb = 'EGFR'.
+</pre>
+
+</dd>
+<dt class="pubdef"><span style="float:right"></span><a name="map_hgnc_ensg_hgnc/2"><b class="pred">map_hgnc_ensg_hgnc</b><var class="arglist">(?Ensg, ?Symb)</var></a></dt><dd class="defbody">Map predicate from Ensembl gene id to HGNC Id.
+
+<pre class="code" ext="">
+?- map_hgnc_ensg_hgnc( Ensg, 19295 ).
+Ensg = 'ENSG00000142235'.
+</pre>
+
+</dd>
+<dt class="pubdef"><span style="float:right"></span><a name="map_hgnc_symb_entz/2"><b class="pred">map_hgnc_symb_entz</b><var class="arglist">(?Symb, ?Entz)</var></a></dt><dd class="defbody">Map prediate from HGNC symbols to (NCBI) entrez gene ids.
+
+<pre class="code" ext="">
+?- map_hgnc_symb_entz( 'LMTK3', Etnz ).
+Etnz = 114783.
+</pre>
+
+</dd>
+<dt class="pubdef"><span style="float:right"></span><a name="map_hgnc_entz_symb/2"><b class="pred">map_hgnc_entz_symb</b><var class="arglist">(?Entz, ?Symb)</var></a></dt><dd class="defbody">Map predicate from entrez ids to approved HGNC Symbol.
+
+<pre class="code" ext="">
+?- map_hgnc_entz_symb( 114783, Symb ).
+Symb = 'LMTK3'.
+</pre>
+
+</dd>
+<dt class="pubdef"><span style="float:right"></span><a name="map_ncbi_ensp_entz/2"><b class="pred">map_ncbi_ensp_entz</b><var class="arglist">(?EnsP, ?Entz)</var></a></dt><dd class="defbody">Map predicate from Ensembl proteins to NCBI/entrez gene ids.
+
+<pre class="code" ext="">
+?- map_ncbi_ensp_entz( 'ENSP00000270238', Entz ).
+Entz = 114783.
+</pre>
+
+</dd>
+<dt class="pubdef"><span style="float:right"></span><a name="map_ncbi_ensg_entz/2"><b class="pred">map_ncbi_ensg_entz</b><var class="arglist">(?EnsG, ?Entz)</var></a></dt><dd class="defbody">Map predicate from Ensembl genes to NCBI/entrez gene ids.
+
+<pre class="code" ext="">
+?- map_ncbi_ensg_entz( 'ENSG00000142235', Entz ).
+Entz = 114783.
+</pre>
+
+</dd>
+<dt class="pubdef"><span style="float:right"></span><a name="map_ncbi_entz_ensp/2"><b class="pred">map_ncbi_entz_ensp</b><var class="arglist">(?Entz, ?EnsP)</var></a></dt><dd class="defbody">Map predicate from NCBI/entrez gene ids to Ensembl proteins.
+
+<pre class="code" ext="">
+?- map_ncbi_entz_ensp( 114783, EnsP ).
+EnsP = 'ENSP00000270238'.
+
+</pre>
+
+</dd>
+<dt class="pubdef"><span style="float:right"></span><a name="map_ncbi_entz_ensg/2"><b class="pred">map_ncbi_entz_ensg</b><var class="arglist">(?Entz, ?EnsG)</var></a></dt><dd class="defbody">Map predicate from NCBI/entrez gene ids to Ensembl genes.
+
+<pre class="code" ext="">
+?- map_ncbi_entz_ensg( 114783, EnsP ).
+EnsP = 'ENSG00000142235'.
+</pre>
+
+</dd>
+<dt class="pubdef"><span style="float:right"></span><a name="map_unip_unip_hgnc/2"><b class="pred">map_unip_unip_hgnc</b><var class="arglist">(?UniP, ?Hgnc)</var></a></dt><dd class="defbody">Map predicate from Uniprot proteins to HGNC ids.
+
+<pre class="code" ext="">
+?-  map_unip_unip_hgnc( 'Q96Q04', Hgnc ).
+Hgnc = 19295.
+
+?- map_unip_unip_hgnc( 'A0A0A0MQW5', Hgnc ).
+Hgnc = 19295.
+
+</pre>
+
+</dd>
+<dt class="pubdef"><span style="float:right"></span><a name="map_unip_unip_unig/2"><b class="pred">map_unip_unip_unig</b><var class="arglist">(?UniP, ?UniG)</var></a></dt><dd class="defbody">Map predicate from Uniprot proteins to Uniprot genes.
+
+<pre class="code" ext="">
+?- map_unip_unip_unig( 'Q96Q04', UniG ).
+UniG = 'Hs.207426'.
+</pre>
+
+</dd>
+<dt class="pubdef"><span style="float:right"></span><a name="map_unip_ensp_unip/2"><b class="pred">map_unip_ensp_unip</b><var class="arglist">(?EnsP, ?UniP)</var></a></dt><dd class="defbody">Map predicate from Ensembl proteins to Uniprot proteins.
+
+<pre class="code" ext="">
+?- map_unip_ensp_unip( 'ENSP00000472020', UniP ).
+UniP = 'Q96Q04'.
+</pre>
+
+</dd>
+<dt class="pubdef"><span style="float:right"></span><a name="map_unip_unip_entz/2"><b class="pred">map_unip_unip_entz</b><var class="arglist">(?UniP, ?Entz)</var></a></dt><dd class="defbody">Map predicate from Uniprot proteins to Entrez ids.
+
+<pre class="code" ext="">
+?- map_unip_unip_entz( 'Q96Q04', Entz ).
+Entz = 114783.
+</pre>
+
+</dd>
+<dt class="pubdef"><span style="float:right"></span><a name="map_gont_gont_symb/2"><b class="pred">map_gont_gont_symb</b><var class="arglist">(?Gont, ?Symb)</var></a></dt><dd class="defbody">Map predicate from GO terms to approved HGNC Symbol.
+
+<pre class="code" ext="">
+?- map_gont_gont_symb( 'GO:0003674', Symb ).
+Symb = 'A1BG' ;
+Symb = 'AAAS' ;
+Symb = 'AARSD1'...
+</pre>
+
+</dd>
+<dt class="pubdef"><span style="float:right"></span><a name="map_gont_gont_gonm/2"><b class="pred">map_gont_gont_gonm</b><var class="arglist">(?Gont, ?Gonm)</var></a></dt><dd class="defbody">Map predicate from gene ontology terms to GO term names.
+
+<pre class="code" ext="">
+?- map_gont_gont_gonm( 'GO:0004674', A ).
+A = 'protein serine/threonine kinase activity'.
+</pre>
+
+</dd>
+<dt class="pubdef"><span style="float:right"></span><a name="map_gont_symb_gont/2"><b class="pred">map_gont_symb_gont</b><var class="arglist">(?Symb, ?Gont)</var></a></dt><dd class="defbody">Map predicate from HGNC symbols to GO terms.
+
+<pre class="code" ext="">
+?- map_gont_symb_gont( 'LMTK3', Symb ).
+Symb = 'GO:0003674' ;
+Symb = 'GO:0004674' ;
+Symb = 'GO:0004713' ;
+Symb = 'GO:0005524' ;
+Symb = 'GO:0005575' ;
+Symb = 'GO:0006468' ;
+Symb = 'GO:0010923' ;
+Symb = 'GO:0016021' ;
+Symb = 'GO:0018108'.
+</pre>
+
+</dd>
+<dt class="pubdef"><span style="float:right"></span><a name="map_hgnc_syno_symb/2"><b class="pred">map_hgnc_syno_symb</b><var class="arglist">(?Syno, ?Symb)</var></a></dt><dd class="defbody">Map file from HGNC synonyms to approved HGNC Symbol.
+
+<pre class="code" ext="">
+?- map_hgnc_syno_symb( 'LMR3', Symb ).
+Symb = 'LMTK3'.
+</pre>
+
+</dd>
+</dl>
+
+</body>
+</html>

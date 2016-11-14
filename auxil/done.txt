@@ -1,0 +1,10 @@
+swipl -f std_maps_hgnc.pl  *
+swipl -f std_maps_gont.pl  *
+swipl -f std_maps_ncbi.pl  *
+swipl -f std_maps_ense.pl  *
+swipl -f std_maps_unip.pl  *
+swipl -f std_graphs_gont.pl (graphs/edge_gont_*) *
+swipl -f maps_unip_seqs.pl *
+swipl -f std_graphs_string.pl *
+
+swipl -f std_maps_psit.pl  (depends on unip_seqs i think)  *
