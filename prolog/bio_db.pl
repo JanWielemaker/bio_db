@@ -2206,3 +2206,20 @@ pack_errors:message( failed_to_load(Iface,Pid,File) ) -->
 % add at_halt, close databases particularly berkeley ones
 :- at_halt( bio_db_close_connections ).
 :- initialization( bio_db_paths, after_load ).
+
+:- multifile sandbox:safe_primitive/1.
+
+bio_sandbox_clause(sandbox:safe_primitive(bio_db:Head)) :-
+	module_property(bio_db, exports(PIList)),
+	member(Name/Arity, PIList),
+	(   sub_atom(Name, 0, _, _, edge_)
+	;   sub_atom(Name, 0, _, _, map_)
+	),
+	functor(Head, Name, Arity).
+
+term_expansion(bio_db_interface, Clauses) :-
+	findall(Clause, bio_sandbox_clause(Clause), Clauses).
+
+bio_db_interface.
+sandbox:safe_primitive(bio_db:bio_db_info(_,_,_)).
+sandbox:safe_primitive(bio_db:bio_db_info(_,_,_,_)).
