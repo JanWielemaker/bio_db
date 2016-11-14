@@ -1990,7 +1990,7 @@ bio_db_source_info( File, InfoF ) :-
 	atom_concat( Stem, '_info', InfoStem ),
 	file_name_extension( InfoStem, Ext, InfoF ).
 
-/** bio_db_predicate_info( +PidOrPname, -InfoName ) :-
+/** bio_db_predicate_info( +PidOrPname, -InfoName ).
 
 	Generate the information predicate name of a Pid or of Db predicate name.
 
