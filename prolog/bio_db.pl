@@ -2223,3 +2223,5 @@ term_expansion(bio_db_interface, Clauses) :-
 bio_db_interface.
 sandbox:safe_primitive(bio_db:bio_db_info(_,_,_)).
 sandbox:safe_primitive(bio_db:bio_db_info(_,_,_,_)).
+sandbox:safe_primitive(bio_db:go_term_symbols(_,_,_)).
+sandbox:safe_primitive(bio_db:symbols_string_graph(_,_,_)).
